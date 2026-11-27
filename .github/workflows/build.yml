@@ -1,32 +1,19 @@
-name: Build Windows Client
+name: Windows client
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
+  push:
+    branches: [main]
 
 jobs:
-  build-windows:
+  build:
     runs-on: windows-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          submodules: 'recursive'
+          submodules: recursive
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install Ninja
-        run: choco install ninja
-
-      - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
+      - uses: dtolnay/rust-toolchain@stable
 
       - name: Install Vulkan SDK
         uses: humbletim/install-vulkan-sdk@v1.2
@@ -34,16 +21,28 @@ jobs:
           version: 1.3.296.0
           cache: true
 
-      - name: Configure CMake
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DDEV=ON -DVULKAN=ON
+      - name: Configure
+        shell: bash
+        run: |
+          mkdir release
+          cd release
+          cmake -A x64 -DEXCEPTION_HANDLING=ON -DVULKAN=ON -DDISCORD=ON -DTOOLS=OFF -DAUTOUPDATE=ON -DDOWNLOAD_GTEST=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=. ..
 
       - name: Build
-        run: cmake --build build --target everything --config Release
+        shell: bash
+        run: |
+          cd release
+          cmake --build . --config Release --target everything
 
-      - name: Upload client
-        uses: actions/upload-artifact@v4
+      - name: Package
+        shell: bash
+        run: |
+          cd release
+          cmake --build . --config Release --target package_default
+          mkdir artifacts
+          mv *-win64.zip artifacts/
+
+      - uses: actions/upload-artifact@v4
         with:
           name: BestClient-Windows
-          path: |
-            build/*.exe
-            build/**/*.exe
+          path: release/artifacts
