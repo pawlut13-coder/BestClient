@@ -26,12 +26,10 @@ jobs:
         run: |
           mkdir release
           cd release
-          cmake -E env CXXFLAGS="/bigobj" cmake -A x64 -DEXCEPTION_HANDLING=ON -DVULKAN=ON -DDOWNLOAD_GTEST=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=. ..
+          cmake -A x64 -DEXCEPTION_HANDLING=ON -DVULKAN=ON -DDISCORD=ON -DTOOLS=OFF -DAUTOUPDATE=ON -DDOWNLOAD_GTEST=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=. ..
 
       - name: Build client
-        shell: bash
-        env:
-          MSYS_ARG_CONV_EXCL: "*"
+        shell: cmd
         run: |
           cd release
           cmake --build . --config Release --target package_default -- /m:2
